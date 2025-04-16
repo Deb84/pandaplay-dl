@@ -8,7 +8,7 @@ from datetime import datetime
 # to do
 # create json file if missing (with init)
 # create urls.txt file if missing
-# urls txt can manage path and (options)
+# urls txt can manage path, name and (options) -v path,
 # Json keys verifications -v
 # input check -b
 # ignore error options
@@ -337,7 +337,7 @@ def UrlsLoop():
                             continue
                         path = parts[1]
                         if not os.path.isdir(path):
-                            ErrorDef(f'The path "{path}" does not exist')
+                            print(ErrorDef(f'The path "{path}" does not exist'))
                             logsError(f'The path "{path}" does not exist', 'Function/UrlsLoop')
                             path = None
                             continue
