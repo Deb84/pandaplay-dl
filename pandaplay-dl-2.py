@@ -167,9 +167,9 @@ def JSONinit(defaultJson, JSONfileName, msg, mode):
 
 # Load the json file
 def JSONLoad(JSONfileName):
-    with open(JSONfileName, 'r') as jsonFile:
         try:
-            dataJSON = json.load(jsonFile)
+            with open(JSONfileName, 'r') as jsonFile:
+                dataJSON = json.load(jsonFile)
         except Exception as e:
             dataJSON = None
             # verbose*
@@ -187,8 +187,7 @@ while True:
             JSONinit(defaultJson, JSONfileName, f'Empty JSON file "{JSONfileName}", trying to write the file...', 'w')
             dataJSON = JSONLoad(JSONfileName)
                 
-        # keys checking
-        #to do!!
+        # check if the keys 'ScriptConfig' and 'ytdlpConfig' exist
         if not dataJSON['ScriptConfig'] or not dataJSON['ytdlpConfig']:
             JSONinit(defaultJson, JSONfileName, f'Incorrect JSON file content "{JSONfileName}", trying to rewrite the file...', 'w')
             dataJSON = JSONLoad(JSONfileName)
@@ -196,6 +195,9 @@ while True:
         JSONScriptConfig = dataJSON['ScriptConfig']
         JSONYtdlpConfig = dataJSON['ytdlpConfig']
 
+        # Check for each keys from 'ScriptConfig' and 'ytdlpConfig' if they exist
+        # Ignore the comments from the json file
+        # If a key is incorrect, user can chooses to reset the json file
         for keys in defaultJson['ScriptConfig']:
             if not keys[0] == '_':
                 if keys not in JSONScriptConfig:
@@ -213,8 +215,8 @@ while True:
                     if YoN(f'An error has occured in the JSON settings file {JSONfileName} (key: {keys} is missing), do you want to reset this file ? (Y/N)', 'Json Importation'): 
                         JSONinit(defaultJson, JSONfileName, 'Json file has been reset with success', 'w')
                         logsInfo(f'{JSONfileName} has been reset with success', 'Json Importation')
-                    else:
-                        logsInfo(f"JSONYtdlpConfig['{keys}'] correctly imported from {JSONfileName}", 'Json Importation')
+                else:
+                    logsInfo(f"JSONYtdlpConfig['{keys}'] correctly imported from {JSONfileName}", 'Json Importation')
 
         break
     else :
