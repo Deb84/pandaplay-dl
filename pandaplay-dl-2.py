@@ -14,8 +14,8 @@ from datetime import datetime
 # input check
 # ignore error options
 # - subbtitle
-# - logs file options (can be set in options), fonction
-# - verbose options
+# - logs file options (can be set in options), fonction --
+# - verbose options -v
 # - language options
 # - two levels errors
 
@@ -41,22 +41,32 @@ def ExcpetionReturn(msgEx, JSONScriptConfig, step):
     except:
         return
     
-
+# Logs function
 def logs(msgLog ,JSONScriptConfig, type, level):
     if not JSONScriptConfig['logs']:
         return
     if not level: level = ''
     else: level = f'[{level}]'
+    # date and syntax
+    now = datetime.now()
+    logSyntax = f'{now.date()} {now.time().strftime("%H:%M:%S")} [{type}] {level}'
+    # Verbose mode (print logs in console if true)
+    if JSONScriptConfig['verbose']: print(f'{logSyntax} {msgLog}')
+    # Try to open and write logs.log
     try:
         with open('logs.log', "a", encoding='utf-8') as logFile:
-            now = datetime.now()
-            logSyntax = f'{now.date()} {now.time().strftime("%H:%M:%S")} [{type}] {level}'
             logFile.write(f'{logSyntax} {msgLog}\n')
             logFile.flush()
     except Exception as e:
         print('Unable to create or access file')
         print(e)
 
+# Logs type function
+# INFO > Informations
+# WARN > Unexpected thing happened but script can still continue
+# ERROR > An error has occured but script can still continue
+# EXCEPTION > An exception has occured
+# CRITICAL > An critical error has occured, script can't continue
 def logsInfo(msgLog, level):
     logs(msgLog ,JSONScriptConfig, 'INFO', level)
 
@@ -71,6 +81,22 @@ def logsException(msgLog, level):
 
 def logsCritical(msgLog, level):
     logs(msgLog ,JSONScriptConfig, 'CRITICAL', level)
+
+
+def YoN(msg, F):
+    while True:
+        In = input(f'{msg}').strip().upper()
+        if In == 'Y':
+            logsInfo('User chooses Y', 'Function/UseUrlsTXT')
+            if F == 'UseUrlsTXT':
+                logsInfo('User chooses Y, urls.txt will be used', f'Function/YoN>{F}')
+            return True
+        elif In == 'N':
+            logsInfo('User chooses N, urls.txt will not be used', f'Function/YoN>{F}')
+            return False
+        else:
+            print('Type Y or N')
+            logsWarn(f"User entered '{In}'", f'Function/YoN>{F}')
 
 
 
@@ -93,6 +119,11 @@ defaultJson = {
         "AskFileName": True,
         "_comment_AskFileName": "true = ask the name for each files (default), false = use default name for every files",
 
+        "logs": False,
+        "_comment_logs": "true = A logs.txt file will be created, return and errors will be saved, false is the default value",
+        "verbose": False,
+        "_comment_verbose": "true = Error and return will be more detailed, can be useful for debugging, false is the default value",
+
         "favoriteFileExtension": "mp4",
         "_comment_FavoriteFileExtension": "set the favorite file extension (will be used if possible)"
     },
@@ -113,18 +144,19 @@ defaultJson = {
             "format": "best",
             "merge_output_format": "mp4",
             "ignoreerrors": True,
-            "outtmpl": "",
             "ffmpeg_location": "C:/Users/deb84/Documents/Installeur/ffmpeg-2024-07-24-git-896c22ef00-full_build/bin/ffmpeg.exe"
         }
     }
 }
 
+
 JSONfileName = 'pandaplay-dl2.settings.json'
 
 # Init the json file with data
-def JSONinit(defaultJson, JSONfileName, msg, failMsg):
+def JSONinit(defaultJson, JSONfileName, msg, mode):
+    failMsg = f'Impossible to write in "{JSONfileName}"'
     try:
-        with open(JSONfileName, 'a') as jsonFile:
+        with open(JSONfileName, mode) as jsonFile:
             jsonFile.write(json.dumps(defaultJson, ensure_ascii=False, indent=4))
             print(ConsoleReturn(msg))
     except Exception as e:
@@ -152,21 +184,43 @@ while True:
 
         if not dataJSON:
             print('6544')
-            JSONinit(defaultJson, JSONfileName, f'Empty JSON file "{JSONfileName}", trying to write the file...', f'Impossible to write in "{JSONfileName}"')
+            JSONinit(defaultJson, JSONfileName, f'Empty JSON file "{JSONfileName}", trying to write the file...', 'w')
             dataJSON = JSONLoad(JSONfileName)
                 
         # keys checking
         #to do!!
+        if not dataJSON['ScriptConfig'] or not dataJSON['ytdlpConfig']:
+            JSONinit(defaultJson, JSONfileName, f'Incorrect JSON file content "{JSONfileName}", trying to rewrite the file...', 'w')
+            dataJSON = JSONLoad(JSONfileName)
 
         JSONScriptConfig = dataJSON['ScriptConfig']
         JSONYtdlpConfig = dataJSON['ytdlpConfig']
 
+        for keys in defaultJson['ScriptConfig']:
+            if not keys[0] == '_':
+                if keys not in JSONScriptConfig:
+                    logsError(f'The key "{keys}" is missing in {JSONfileName}', 'Json Importation')
+                    if YoN(f'An error has occured in the JSON settings file {JSONfileName}, do you want to reset this file ? (Y/N)', 'Json Importation'): 
+                        JSONinit(defaultJson, JSONfileName, 'Json file has been reset with success', 'w')
+                        logsInfo(f'{JSONfileName} has been reset with success', 'Json Importation')
+                else:
+                    logsInfo(f"JSONScriptConfig['{keys}'] correctly imported from {JSONfileName}", 'Json Importation')
+
+        for keys in defaultJson['ytdlpConfig']:
+            if not keys[0] == '_':
+                if keys not in JSONYtdlpConfig:
+                    logsError(f'The key "{keys}" is missing in {JSONfileName}', 'Json Importation')
+                    if YoN(f'An error has occured in the JSON settings file {JSONfileName} (key: {keys} is missing), do you want to reset this file ? (Y/N)', 'Json Importation'): 
+                        JSONinit(defaultJson, JSONfileName, 'Json file has been reset with success', 'w')
+                        logsInfo(f'{JSONfileName} has been reset with success', 'Json Importation')
+                    else:
+                        logsInfo(f"JSONYtdlpConfig['{keys}'] correctly imported from {JSONfileName}", 'Json Importation')
 
         break
     else :
         try:
             msg = f'JSON file {JSONfileName} is missing, file created the file at "{current_file_path}"'
-            JSONinit(defaultJson, JSONfileName, msg, f'Impossible to write in {JSONfileName}')
+            JSONinit(defaultJson, JSONfileName, msg, 'w')
             JSONLoad(JSONfileName)
 
         except Exception as e:
@@ -175,25 +229,13 @@ while True:
             print(ErrorDef(e))
             exit()
 
- 
 # log start script
 logs('---New Execution---', JSONScriptConfig, 'START', None)
-
 
 # Use Urls.txt, Y true, F false
 def UseUrlsTXT(JSONScriptConfig): 
     if JSONScriptConfig["AskUrlsTxt"]:
-        while True:
-            UrlsTXT = input('Use Urls.txt for URLS (Y/N):').strip().upper()
-            if UrlsTXT == 'Y':
-                logsInfo('User chooses Y, urls.txt will be used', 'Function/UseUrlsTXT')
-                return True
-            elif UrlsTXT == 'N':
-                logsInfo('User chooses N, urls.txt will not be used', 'Function/UseUrlsTXT')
-                return False
-            else:
-                print('Type Y or N')
-                logsWarn(f"User entered '{UrlsTXT}'", 'Function/UseUrlsTXT')
+        return YoN('Use Urls.txt for URLS (Y/N):', 'UseUrlsTxt')
     else:
         return False
 
