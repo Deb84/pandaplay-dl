@@ -9,10 +9,11 @@ from datetime import datetime
 # create json file if missing (with init)
 # create urls.txt file if missing
 # urls txt can manage path and (options)
-# Json keys verifications
-# ask to ytdlp availible format for an url
-# input check
+# Json keys verifications -v
+# input check -b
 # ignore error options
+# multiple files pattern naming
+# remove print (and/or make consoleReturn)
 # - subbtitle
 # - logs file options (can be set in options), fonction --
 # - verbose options -v
@@ -143,6 +144,7 @@ defaultJson = {
         "options": {
             "format": "best",
             "merge_output_format": "mp4",
+            "outtmpl": "",
             "ignoreerrors": True,
             "ffmpeg_location": "C:/Users/deb84/Documents/Installeur/ffmpeg-2024-07-24-git-896c22ef00-full_build/bin/ffmpeg.exe"
         }
@@ -195,6 +197,9 @@ while True:
         JSONScriptConfig = dataJSON['ScriptConfig']
         JSONYtdlpConfig = dataJSON['ytdlpConfig']
 
+        # log start script
+        logs('---New Execution---', JSONScriptConfig, 'START', None)
+
         # Check for each keys from 'ScriptConfig' and 'ytdlpConfig' if they exist
         # Ignore the comments from the json file
         # If a key is incorrect, user can chooses to reset the json file
@@ -231,8 +236,7 @@ while True:
             print(ErrorDef(e))
             exit()
 
-# log start script
-logs('---New Execution---', JSONScriptConfig, 'START', None)
+
 
 # Use Urls.txt, Y true, F false
 def UseUrlsTXT(JSONScriptConfig): 
@@ -244,7 +248,7 @@ def UseUrlsTXT(JSONScriptConfig):
 # Get url if N
 def GetUrl():
     while True:
-        base_url = input('URL:')
+        base_url = input('URL:').strip()
         logsInfo(f"User entered '{base_url}' as a url", 'Function/GetUrl')
         final_url = VideoUrlEdit(base_url, JSONYtdlpConfig)
         if final_url:
@@ -283,7 +287,7 @@ def VideoUrlEdit(base_url,JSONYtdlpConfig):
 
         
         else: 
-            print(ErrorDef(f'Invalid url: "{base_url}"'))
+            print(ErrorDef(f'Invalid url: "{base_url}", a pandaplay.io url is expected'))
             logsError(f'Invalid url: "{base_url}" (not pandaplay.io)', 'Function/VideoUrlEdit')
             return None
     else:
@@ -319,17 +323,41 @@ def UrlsLoop():
         try: 
             with open('urls.txt', 'r') as file:
                 txtUrls = [line.strip() for line in file.readlines() if line.strip()]
-
+                path = None
+                final_url = None
+                
                 for url in txtUrls:
-                    final_url = VideoUrlEdit(url, JSONYtdlpConfig)
-                    if final_url:
-                        validsUrl.append(final_url)
+                    if url.startswith('#'):
+                        continue
+                    
+                    if url.startswith('-path'):
+                        parts = url.split(' ')
+                        if len(parts) < 2:
+                            logsError(f'Incorrect option "{url}"', 'Function/UrlsLoop')
+                            continue
+                        path = parts[1]
+                        if not os.path.isdir(path):
+                            ErrorDef(f'The path "{path}" does not exist')
+                            logsError(f'The path "{path}" does not exist', 'Function/UrlsLoop')
+                            path = None
+                            continue
+
+                    else:
+                        final_url = VideoUrlEdit(url, JSONYtdlpConfig)         
+
+                        if final_url:
+                            if not path:
+                                path = None
+                            validsUrl.append([final_url, path])
+                            print(validsUrl) #verbose
+
 
                 if not validsUrl:
                     print(ErrorDef('No correct url found'))
                     logsCritical('No correct url found in urls.txt', 'Function/UrlsLoop')
                     exit()
                 else:
+                    print(validsUrl)
                     return validsUrl
         except Exception as e:
             logsException(e, 'Function/UrlsLoop')
@@ -371,11 +399,9 @@ def locationF(current_file_path, JSONScriptConfig, JSONfileName):
             
 
 # File naming
-def fileName(current_file_path, JSONScriptConfig, JSONfileName):
-    location = locationF(current_file_path, JSONScriptConfig, JSONfileName)
-
+def fileName(JSONScriptConfig, JSONfileName, location):
     if not JSONScriptConfig['AskFileName']:
-        fileN = input('File name (empty for default name):')
+        fileN = input('File name (empty for default name):').strip()
         logsInfo(f'User entered {fileN} for the name of downloded file', 'Function/fileName')
     else:
         fileN = ''
@@ -390,43 +416,40 @@ def fileName(current_file_path, JSONScriptConfig, JSONfileName):
         else:
             fileN = JSONScriptConfig['FileName']
 
-    fileN2 = fileN
+    filename = fileN
     it = 0
-    while os.path.isfile(os.path.join(location, fileN2 + '.mp4')):
+    while os.path.isfile(os.path.join(location, filename + '.mp4')):
         it += 1
-        fileN2 = f"{fileN}({it})"
+        filename = f"{fileN}({it})"
 
-    finalPath = os.path.join(location, fileN2)
-    print(f'Actual file path : "{finalPath}"')
-    logsInfo(f'The final name for downloded file is {fileN2}', 'Function/fileName')
-    logsInfo(f'The final path for downloded file is {finalPath}', 'Function/fileName')
-    return finalPath
+    logsInfo(f'The final name for downloded file is {filename}', 'Function/fileName')
+    return filename
 
 
 
 
 # Download
-def download(final_url, JSONYtdlpConfig, fileNameVar):
+def download(final_url, JSONYtdlpConfig, final_path):
     options = JSONYtdlpConfig['options']
     ffmpegPath = options['ffmpeg_location']
     options["http_headers"] = JSONYtdlpConfig['headers']
-    if not fileNameVar:
+    if not final_path:
         return None
 
 
     if not ffmpegPath:
         ffmpegPath = ''
     else:
-        options['outtmpl'] = fileNameVar
+        options['outtmpl'] = final_path + '.mp4'
 
     options['ffmpeg_location'] = ffmpegPath
 
-    options['verbose'] = True #del
+    options['verbose'] = False #del # opt
 
     try:
         with yt_dlp.YoutubeDL(options) as ydl:
             ydl.download([final_url])
-            logsInfo(f'{final_url} downloaded', 'Function/download')
+            logsInfo(f'{final_url} downloaded at "{final_path}"', 'Function/download')
     except Exception as e:
         print(ErrorDef(e))
         logsError(f'Issue to download "{final_url}"', 'Function/download')
@@ -441,19 +464,35 @@ if UseUrlsTXT(JSONScriptConfig):
 
     # call download() and fileName for each urls
     for element in urls:
-        # filaName needs to be here if a name is already used
-        fileNameVar = fileName(current_file_path, JSONScriptConfig, JSONfileName)
-        download(element, JSONYtdlpConfig, fileNameVar)
+        url, path = element
+        if path == None:
+            location = locationF(current_file_path, JSONScriptConfig, JSONfileName)
+        else:
+            location = path
+            logsInfo(f'The path "{path}" exist', 'DownloadMgmt')
+            fileNameVar = fileName(JSONScriptConfig, JSONfileName, location)
+            final_path = os.path.join(location, fileNameVar)
+            logsInfo(f'The final location for downloded file is {location}', 'DownloadMgmt')
+            logsInfo(f'The final path for downloded file is {final_path}', 'DownloadMgmt')
+            download(url, JSONYtdlpConfig, final_path)
 
+
+# if not used Urls.txt
+# check if user has entered something, call VideoUrlEdit for check the url
+# if user enters nothing, loop until user enters something
+# call locationF for get the path, fileName for get the name then call download
 else:
     while True:
-        base_url = GetUrl()
+        base_url = GetUrl() # Input url
         if base_url:
-            fileNameVar = fileName(current_file_path, JSONScriptConfig, JSONfileName)
             final_url = VideoUrlEdit(base_url, JSONYtdlpConfig)
             if final_url:
-                # dl fonc
-                download(final_url, JSONYtdlpConfig, fileNameVar)
+                location = locationF(current_file_path, JSONScriptConfig, JSONfileName)
+                fileNameVar = fileName(JSONScriptConfig, JSONfileName, location)
+                final_path = os.path.join(location, fileNameVar)
+                print(f'Actual file path : "{final_path}"')
+                logsInfo(f'The final path for downloded file is "{final_path}"', 'DownloadMgmt')
+                download(final_url, JSONYtdlpConfig, final_path)
                 break
         else:
             print(ErrorDef('Please enter a url'))
