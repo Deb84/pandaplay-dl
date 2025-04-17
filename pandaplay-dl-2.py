@@ -188,7 +188,6 @@ while True:
         dataJSON = JSONLoad(JSONfileName)
 
         if not dataJSON:
-            print('6544')
             JSONinit(defaultJson, JSONfileName, f'Empty JSON file "{JSONfileName}", trying to write the file...', 'w')
             dataJSON = JSONLoad(JSONfileName)
                 
@@ -409,7 +408,6 @@ def UrlsLoop():
                     return validsUrl
         except Exception as e:
             logsException(e, 'Function/UrlsLoop')
-            print(e)
 
 
 # Location
