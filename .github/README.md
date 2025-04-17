@@ -1,5 +1,5 @@
 ## THIS SCRIPT IS IN DEVELOPMENT AND ABSOLUTELY NOT FINISHED
-Some bug can be occured
+Some bugs may occur
 
 
 ## Installations
