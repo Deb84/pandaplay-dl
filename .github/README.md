@@ -5,7 +5,7 @@ Some bug can be occured
 ## Installations
 
 ```
-git clone git clone --branch indev --single-branch https://github.com/Deb84/pandaplay-dl.git
+git clone --branch indev --single-branch https://github.com/Deb84/pandaplay-dl.git
 ```
 ```
 cd pandaplay-dl
