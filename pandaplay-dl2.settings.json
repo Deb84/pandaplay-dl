@@ -1,0 +1,46 @@
+{
+    "ScriptConfig": {
+        "AskUrlsTxt": true,
+        "_comment_AskUrlsTxt": "true = ask for using Urls.txt (default), false = don't ask",
+        "DownloadPath": "",
+        "_comment_DownloadPath": "set a default path here, path will not be asked (make sure to use / and not one of these \\, if empty = path asked in terminal (default)",
+        "AskPath": true,
+        "_comment_AskPath": "true = ask the path for the file (default), false = don't ask the path",
+
+        "FileName": "download-ppdl",
+        "_comment_FileName": "set a default file name here, please don't insert an file extension in the file name",
+        "AskFileName": true,
+        "_comment_AskFileName": "true = ask the name for each files (default), false = use default name for every files",
+        "AskUnspecifiedPath": true,
+        "_comment_AskUnspecifiedPath": "true = if a path option is incorrect in urls.txt, a manual console input will be necessary for the path, false = the urls will be ignored if their path is incorrect",
+
+        "logs": true,
+        "_comment_logs": "true = A logs.txt file will be created, return and errors will be saved, false is the default value",
+        "verbose": false,
+        "_comment_verbose": "true = Error and return will be more detailed, can be useful for debugging, false is the default value",
+
+        "favoriteFileExtension": "mp4",
+        "_comment_FavoriteFileExtension": "set the favorite file extension (will be used if possible)"
+    },
+    "ytdlpConfig": {
+        "headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0",
+            "Referer": "https://app.pandaplay.io/",
+            "Origin": "https://app.pandaplay.io",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Connection": "keep-alive"
+        },
+        "options": {
+            "format": "best",
+            "merge_output_format": "mp4",
+            "outtmpl": "",
+            "ignoreerrors": true,
+            "ffmpeg_location": "C:/Users/deb84/Documents/Installeur/ffmpeg-2024-07-24-git-896c22ef00-full_build/bin/ffmpeg.exe"
+        }
+    }
+}
