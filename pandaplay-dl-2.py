@@ -14,6 +14,7 @@ from datetime import datetime
 # ignore error options
 # multiple files pattern naming
 # remove print (and/or make consoleReturn)
+# if path on url line, change the path for this url only
 # - subbtitle
 # - logs file options (can be set in options), fonction --
 # - verbose options -v
@@ -119,6 +120,8 @@ defaultJson = {
         "_comment_FileName": "set a default file name here, please don't insert an file extension in the file name",
         "AskFileName": True,
         "_comment_AskFileName": "true = ask the name for each files (default), false = use default name for every files",
+        "AskUnspecifiedPath": True,
+        "_comment_AskUnspecifiedPath": "true = if a path option is incorrect in urls.txt, a manual console input will be necessary for the path (default), false = the urls will be ignored if their path is incorrect",
 
         "logs": False,
         "_comment_logs": "true = A logs.txt file will be created, return and errors will be saved, false is the default value",
@@ -325,32 +328,77 @@ def UrlsLoop():
                 txtUrls = [line.strip() for line in file.readlines() if line.strip()]
                 path = None
                 final_url = None
+
+                def OptCheck(url):
+                    parts = url.split(' ')
+                    print(f'parts: {parts}') #del
+                    if len(parts) < 2:
+                        logsError(f'Incorrect option for "{url}"', 'Function/UrlsLoop/OptFunction')
+                        return False, None
+                    
+                    if url[0] == '-':
+                        logsInfo('Option on an line detected, will be treated', 'Function/UrlsLoop/OptCheck')
+                        return True, 'line'
+                    
+                    elif parts[1][0] == '-':
+                        logsInfo('Option on an url detected, will be treated', 'Function/UrlsLoop/OptCheck')
+                        return True, 'url'
+                    
+                    else:
+                        return False, None
+
+                def OptFunction(url, mode):
+                    parts = url.split(' ')
+                    urlPart = None
+
+                    if len(parts) > 3:
+                        parts[2] = ' '.join(parts[2:])  
+                        parts = parts[:3]  
+                        logsInfo(f'Path parts merged "{parts}"', 'Function/UrlsLoop/OptFunction')
+
+                    if mode == 'line':
+                        path = parts[1]
+                        logsInfo(f'Mode line used for "{parts}"', 'Function/UrlsLoop/OptFunction')
+
+                    elif mode == 'url':
+                        urlPart = parts[0]
+                        path = parts[2]
+                        logsInfo(f'Mode url used for "{parts}"', 'Function/UrlsLoop/OptFunction')
+
+                    if not os.path.isdir(path):
+                        print(ErrorDef(f"The path '{path} does not exist, '{urlPart}' will not be downloaded, if you don't understand this message, please check urls.txt")) #warn
+                        logsError(f'The path "{path}" does not exist, "{urlPart}" will not be download', 'Function/UrlsLoop/OptFunction')
+                        path = None
+                    else: 
+                        logsInfo(f'The path {path} exist', 'Function/UrlsLoop/OptFunction')
+
+                    return urlPart, path
                 
                 for url in txtUrls:
                     if url.startswith('#'):
                         continue
-                    
-                    if url.startswith('-path'):
-                        parts = url.split(' ')
-                        if len(parts) < 2:
-                            logsError(f'Incorrect option "{url}"', 'Function/UrlsLoop')
-                            continue
-                        path = parts[1]
-                        if not os.path.isdir(path):
-                            print(ErrorDef(f'The path "{path}" does not exist'))
-                            logsError(f'The path "{path}" does not exist', 'Function/UrlsLoop')
-                            path = None
-                            continue
 
-                    else:
-                        final_url = VideoUrlEdit(url, JSONYtdlpConfig)         
+                    urlP = url
+                    OptCheckBool, mode = OptCheck(url)
+                    if OptCheckBool:
+                        urlP, path = OptFunction(url, mode)
+                        if not urlP: logsInfo(f'Option detected, the path "{path}" will be used for the next urls', 'Function/UrlsLoop')
+                        logsInfo(f'Option detected, the path "{path}" will be used for "{urlP}"', 'Function/UrlsLoop')
 
-                        if final_url:
-                            if not path:
-                                path = None
+                    if urlP:
+                        final_url = VideoUrlEdit(urlP, JSONYtdlpConfig)   
+
+                    if not urlP and not path:
+                        print(f'urlP et path =')
+                        continue
+
+                    if final_url:
+                        if not JSONScriptConfig['AskUnspecifiedPath']:
+                            if path:
+                                validsUrl.append([final_url, path])
+                        else: 
                             validsUrl.append([final_url, path])
-                            print(validsUrl) #verbose
-
+                        # print(validsUrl) #verbose
 
                 if not validsUrl:
                     print(ErrorDef('No correct url found'))
@@ -361,6 +409,7 @@ def UrlsLoop():
                     return validsUrl
         except Exception as e:
             logsException(e, 'Function/UrlsLoop')
+            print(e)
 
 
 # Location
@@ -444,7 +493,7 @@ def download(final_url, JSONYtdlpConfig, final_path):
 
     options['ffmpeg_location'] = ffmpegPath
 
-    options['verbose'] = False #del # opt
+    # options['verbose'] = False #del # opt
 
     try:
         with yt_dlp.YoutubeDL(options) as ydl:
