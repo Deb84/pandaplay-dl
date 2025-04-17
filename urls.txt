@@ -1,7 +1,16 @@
+<<<<<<< HEAD
 # line starting with # will be ignored
 # line starting with - will be considered like an options, becareful if you don't understand what you do
 # -path <path> set a new path for the next urls, bypass url manual input or path settled in JSON settings file
 # exemple:
 # -path <path>
 # url
+=======
+# line starting with # will be ignored
+# line starting with - will be considered like an options, becareful if you don't understand what you do
+# -path <path> set a new path for the next urls, bypass url manual input or path settled in JSON settings file
+# exemple:
+# -path <path>
+# url
+>>>>>>> 39ae514e2ca78890a270d4edffe50979e7704bea
 # url
