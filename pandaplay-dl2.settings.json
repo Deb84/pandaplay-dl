@@ -11,8 +11,10 @@
         "_comment_FileName": "set a default file name here, please don't insert an file extension in the file name",
         "AskFileName": true,
         "_comment_AskFileName": "true = ask the name for each files (default), false = use default name for every files",
+        "AskUnspecifiedPath": true,
+        "_comment_AskUnspecifiedPath": "true = if a path option is incorrect in urls.txt, a manual console input will be necessary for the path, false = the urls will be ignored if their path is incorrect",
 
-        "logs": true,
+        "logs": false,
         "_comment_logs": "true = A logs.txt file will be created, return and errors will be saved, false is the default value",
         "verbose": false,
         "_comment_verbose": "true = Error and return will be more detailed, can be useful for debugging, false is the default value",
@@ -36,6 +38,7 @@
         "options": {
             "format": "best",
             "merge_output_format": "mp4",
+            "outtmpl": "",
             "ignoreerrors": true,
             "ffmpeg_location": "C:/Users/deb84/Documents/Installeur/ffmpeg-2024-07-24-git-896c22ef00-full_build/bin/ffmpeg.exe"
         }
