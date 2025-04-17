@@ -14,7 +14,7 @@
         "AskUnspecifiedPath": true,
         "_comment_AskUnspecifiedPath": "true = if a path option is incorrect in urls.txt, a manual console input will be necessary for the path, false = the urls will be ignored if their path is incorrect",
 
-        "logs": true,
+        "logs": false,
         "_comment_logs": "true = A logs.txt file will be created, return and errors will be saved, false is the default value",
         "verbose": false,
         "_comment_verbose": "true = Error and return will be more detailed, can be useful for debugging, false is the default value",
