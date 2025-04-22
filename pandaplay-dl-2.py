@@ -150,7 +150,7 @@ defaultJson = {
             "merge_output_format": "mp4",
             "outtmpl": "",
             "ignoreerrors": True,
-            "ffmpeg_location": "C:/Users/deb84/Documents/Installeur/ffmpeg-2024-07-24-git-896c22ef00-full_build/bin/ffmpeg.exe"
+            "ffmpeg_location": ""
         }
     }
 }
