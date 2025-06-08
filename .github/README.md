@@ -1,6 +1,7 @@
 ## THIS SCRIPT IS IN DEVELOPMENT AND ABSOLUTELY NOT FINISHED
-Some bugs may occur
+My first python script and also my first real script
 
+Some bugs may occur
 
 ## Installations
 
